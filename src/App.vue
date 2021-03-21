@@ -4,14 +4,29 @@ export default {
 
 	data() {
 		return {
+			filter: '',
 			graph: [],
-			tickerNew: '',
+
+			page: 1,
+			pageNext: true,
+
 			tickerCurrent: null,
-			tickers: []
+			tickers: [],
+			tickerToAddName: ''
 		}
 	},
 
 	created() {
+		const windowData = Object.fromEntries(new URL(window.location).searchParams.entries());
+
+		if (windowData.filter) {
+			this.filter = windowData.filter;
+		}
+
+		if (windowData.page) {
+			this.page = windowData.page;
+		}
+
 		const tickersData = localStorage.getItem('cryptonomicon-list');
 
 		if (tickersData) {
@@ -28,13 +43,18 @@ export default {
 		},
 
 		tickerAdd() {
+			if (this.tickers.find(ticker => ticker.name === this.tickerToAddName)) {
+				return;
+			}
+
 			const tickerToAdd = {
-				name: this.tickerNew,
+				name: this.tickerToAddName,
 				price: '-'
 			};
 
 			this.tickers.push(tickerToAdd);
-			this.tickerNew = '';
+			this.tickerToAddName = '';
+			this.filter = '';
 
 			localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers));
 			this.subscribeToUpdates(tickerToAdd.name);
@@ -49,6 +69,14 @@ export default {
 			this.graph = [];
 		},
 
+		tickersFiltered() {
+			const start = (this.page - 1) * 6;
+			const end = this.page * 6;
+			const filtered = this.tickers.filter(ticker => ticker.name.includes(this.filter));
+			this.pageNext = filtered.length > end;
+			return filtered.slice(start, end);
+		},
+
 		subscribeToUpdates(tickerName) {
 			setInterval(async () => {
 				const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=164afab32fd8a2e783c90b333887eaaaea9a8c146437141ead69c62edbf4dd5e`);
@@ -59,6 +87,17 @@ export default {
 					this.graph.push(data.USD);
 				}
 			}, 3000);
+		}
+	},
+
+	watch: {
+		filter() {
+			this.page = 1;
+			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
+		},
+
+		page() {
+			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
 		}
 	}
 }
@@ -79,7 +118,7 @@ export default {
 				<div class="max-w-xs">
 					<label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
 					<div class="mt-1 relative rounded-md shadow-md">
-						<input v-model='tickerNew' @keydown.enter='tickerAdd'
+						<input v-model.trim='tickerToAddName' @keydown.enter='tickerAdd'
 							type="text" name="wallet" id="wallet"
 							placeholder="Например DOGE"
 							class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
@@ -114,9 +153,23 @@ export default {
 		<template v-if='tickers.length'>
 			<hr class="w-full border-t border-gray-600 my-4" />
 
-			<!-- Ticker info -->
+			<!-- Filter -->
+			<div>
+				<button v-if='page > 1' @click='page--'
+					class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+					Назад
+				</button>
+				<button v-if='pageNext' @click='page++'
+					class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+					Вперёд
+				</button>
+				<div>Фильтр: <input v-model='filter' /></div>
+			</div>
+			<hr class="w-full border-t border-gray-600 my-4" />
+
+			<!-- Tickers info -->
 			<dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-				<div v-for='ticker in tickers' :key='ticker.name'
+				<div v-for='ticker in tickersFiltered()' :key='ticker.name'
 					@click='tickerSelect(ticker)'
 					:class='{
 						"border-4": tickerCurrent === ticker
