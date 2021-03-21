@@ -6,9 +6,7 @@ export default {
 		return {
 			filter: '',
 			graph: [],
-
 			page: 1,
-			pageNext: true,
 
 			tickerCurrent: null,
 			tickers: [],
@@ -17,15 +15,14 @@ export default {
 	},
 
 	created() {
+		const VALID_KEYS = ['filter', 'page'];
 		const windowData = Object.fromEntries(new URL(window.location).searchParams.entries());
 
-		if (windowData.filter) {
-			this.filter = windowData.filter;
-		}
-
-		if (windowData.page) {
-			this.page = windowData.page;
-		}
+		VALID_KEYS.forEach(key => {
+			if (windowData[key]) {
+				this[key] = windowData[key];
+			}
+		});
 
 		const tickersData = localStorage.getItem('cryptonomicon-list');
 
@@ -35,13 +32,47 @@ export default {
 		}
 	},
 
-	methods: {
-		graphNormalize() {
+	computed: {
+		graphNormalized() {
 			const maxValue = Math.max(...this.graph);
 			const minValue = Math.min(...this.graph);
+
+			if (minValue === maxValue) {
+				return this.graph.map(() => 50);
+			}
+
 			return this.graph.map(price => 5 + (price - minValue) * 95 / (maxValue - minValue));
 		},
 
+		indexEnd() {
+			return this.page * 6;
+		},
+
+		indexStart() {
+			return (this.page - 1) * 6;
+		},
+
+		pageNext() {
+			return this.tickersFiltered.length > this.indexEnd;
+		},
+
+		pageState() {
+			return {
+				filter: this.filter,
+				page: this.page
+			};
+		},
+
+		tickersFiltered() {
+			return this.tickers.filter(ticker => ticker.name.includes(this.filter));
+		},
+
+		tickersPaginated() {
+			return this.tickersFiltered.slice(this.indexStart, this.indexEnd);
+		}
+	},
+
+	methods: {
 		tickerAdd() {
 			if (this.tickers.find(ticker => ticker.name === this.tickerToAddName)) {
 				return;
@@ -52,29 +83,23 @@ export default {
 				price: '-'
 			};
 
-			this.tickers.push(tickerToAdd);
+			this.tickers = [...this.tickers, tickerToAdd];
 			this.tickerToAddName = '';
 			this.filter = '';
 
-			localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers));
 			this.subscribeToUpdates(tickerToAdd.name);
 		},
 
 		tickerDelete(tickerName) {
 			this.tickers = this.tickers.filter(ticker => ticker.name !== tickerName);
+
+			if (this.tickerCurrent.name === tickerName) {
+				this.tickerCurrent = null;
+			}
 		},
 
 		tickerSelect(ticker) {
 			this.tickerCurrent = ticker;
-			this.graph = [];
-		},
-
-		tickersFiltered() {
-			const start = (this.page - 1) * 6;
-			const end = this.page * 6;
-			const filtered = this.tickers.filter(ticker => ticker.name.includes(this.filter));
-			this.pageNext = filtered.length > end;
-			return filtered.slice(start, end);
 		},
 
 		subscribeToUpdates(tickerName) {
@@ -93,11 +118,24 @@ export default {
 	watch: {
 		filter() {
 			this.page = 1;
-			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
 		},
 
-		page() {
-			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${this.filter}&page=${this.page}`);
+		pageState(value) {
+			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`);
+		},
+
+		tickerCurrent() {
+			this.graph = [];
+		},
+
+		tickers() {
+			localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers));
+		},
+
+		tickersPaginated() {
+			if (this.tickersPaginated.length === 0 && this.page > 1) {
+				this.page -= 1;
+			}
 		}
 	}
 }
@@ -169,7 +207,7 @@ export default {
 
 			<!-- Tickers info -->
 			<dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-				<div v-for='ticker in tickersFiltered()' :key='ticker.name'
+				<div v-for='ticker in tickersPaginated' :key='ticker.name'
 					@click='tickerSelect(ticker)'
 					:class='{
 						"border-4": tickerCurrent === ticker
@@ -203,7 +241,7 @@ export default {
 					{{ tickerCurrent.name }} - USD
 				</h3>
 				<div class="flex items-end border-gray-600 border-b border-l h-64">
-					<div v-for='(bar, idx) in graphNormalize()' :key='idx'
+					<div v-for='(bar, idx) in graphNormalized' :key='idx'
 						:style='{
 							height: `${bar}%`
 						}'
