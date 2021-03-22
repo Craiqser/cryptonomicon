@@ -1,5 +1,5 @@
 <script>
-import { loadTickers } from './api';
+import { subscribeToTicker } from './api';
 
 export default {
 	name: "App",
@@ -30,9 +30,12 @@ export default {
 
 		if (tickersData) {
 			this.tickers = JSON.parse(tickersData);
+			this.tickers.forEach(ticker => {
+				subscribeToTicker(ticker.name, (price) => {
+					console.log(ticker.name, price);
+				})
+			});
 		}
-
-		setInterval(this.updateTickers(), 5000);
 	},
 
 	computed: {
@@ -81,6 +84,7 @@ export default {
 				return price;
 			}
 
+			price = parseFloat(price);
 			return price > 1 ? price.toFixed(2) : price.toPrecision(2);
 		},
 
@@ -97,6 +101,10 @@ export default {
 			this.tickers = [...this.tickers, tickerToAdd];
 			this.tickerToAddName = '';
 			this.filter = '';
+
+			subscribeToTicker(tickerToAdd.name, (price) => {
+				console.log(tickerToAdd.name, price);
+			});
 		},
 
 		tickerDelete(tickerName) {
@@ -111,13 +119,13 @@ export default {
 			this.tickerCurrent = ticker;
 		},
 
-		async updateTickers() {
-			if (!this.tickers.length) {
-				return;
-			}
+		async tickersUpdate() {
+			// if (!this.tickers.length) {
+			// 	return;
+			// }
 
-			const exchangeData = await loadTickers(this.tickers.map(ticker => ticker.name));
-			this.tickers.forEach(ticker => ticker.price = exchangeData[ticker.name.toUpperCase()] ?? '-');
+			// const exchangeData = await loadTickers(this.tickers.map(ticker => ticker.name));
+			// this.tickers.forEach(ticker => ticker.price = exchangeData[ticker.name.toUpperCase()] ?? '-');
 		}
 	},
 
