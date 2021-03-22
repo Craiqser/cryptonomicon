@@ -1,4 +1,6 @@
 <script>
+import { loadTickers } from './api';
+
 export default {
 	name: "App",
 
@@ -28,8 +30,9 @@ export default {
 
 		if (tickersData) {
 			this.tickers = JSON.parse(tickersData);
-			this.tickers.forEach(ticker => this.subscribeToUpdates(ticker.name));
 		}
+
+		setInterval(this.updateTickers(), 5000);
 	},
 
 	computed: {
@@ -73,6 +76,14 @@ export default {
 	},
 
 	methods: {
+		priceFormat(price) {
+			if (price === '-') {
+				return price;
+			}
+
+			return price > 1 ? price.toFixed(2) : price.toPrecision(2);
+		},
+
 		tickerAdd() {
 			if (this.tickers.find(ticker => ticker.name === this.tickerToAddName)) {
 				return;
@@ -86,8 +97,6 @@ export default {
 			this.tickers = [...this.tickers, tickerToAdd];
 			this.tickerToAddName = '';
 			this.filter = '';
-
-			this.subscribeToUpdates(tickerToAdd.name);
 		},
 
 		tickerDelete(tickerName) {
@@ -102,16 +111,13 @@ export default {
 			this.tickerCurrent = ticker;
 		},
 
-		subscribeToUpdates(tickerName) {
-			setInterval(async () => {
-				const f = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${tickerName}&tsyms=USD&api_key=164afab32fd8a2e783c90b333887eaaaea9a8c146437141ead69c62edbf4dd5e`);
-				const data = await f.json();
-				this.tickers.find(ticker => ticker.name === tickerName).price = data.USD > 1 ? data.USD.toFixed(2) : data.USD?.toPrecision(2);
+		async updateTickers() {
+			if (!this.tickers.length) {
+				return;
+			}
 
-				if (this.tickerCurrent?.name === tickerName) {
-					this.graph.push(data.USD);
-				}
-			}, 3000);
+			const exchangeData = await loadTickers(this.tickers.map(ticker => ticker.name));
+			this.tickers.forEach(ticker => ticker.price = exchangeData[ticker.name.toUpperCase()] ?? '-');
 		}
 	},
 
@@ -218,7 +224,7 @@ export default {
 							{{ ticker.name }} - USD
 						</dt>
 						<dd class="mt-1 text-3xl font-semibold text-gray-900">
-							{{ ticker.price }}
+							{{ priceFormat(ticker.price) }}
 						</dd>
 					</div>
 					<div class="w-full border-t border-gray-200">
