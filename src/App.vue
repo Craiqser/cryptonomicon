@@ -1,5 +1,5 @@
 <script>
-import { subscribeToTicker } from './api';
+import { subscribeToTicker, unsubscribeFromTicker } from './api';
 
 export default {
 	name: "App",
@@ -30,11 +30,7 @@ export default {
 
 		if (tickersData) {
 			this.tickers = JSON.parse(tickersData);
-			this.tickers.forEach(ticker => {
-				subscribeToTicker(ticker.name, (price) => {
-					console.log(ticker.name, price);
-				})
-			});
+			this.tickers.forEach(ticker => subscribeToTicker(ticker.name, (price) => this.tickerUpdate(ticker.name, price)));
 		}
 	},
 
@@ -102,9 +98,7 @@ export default {
 			this.tickerToAddName = '';
 			this.filter = '';
 
-			subscribeToTicker(tickerToAdd.name, (price) => {
-				console.log(tickerToAdd.name, price);
-			});
+			subscribeToTicker(tickerToAdd.name, (price) => this.tickerUpdate(tickerToAdd.name, price));
 		},
 
 		tickerDelete(tickerName) {
@@ -113,19 +107,16 @@ export default {
 			if (this.tickerCurrent.name === tickerName) {
 				this.tickerCurrent = null;
 			}
+
+			unsubscribeFromTicker(tickerName);
 		},
 
 		tickerSelect(ticker) {
 			this.tickerCurrent = ticker;
 		},
 
-		async tickersUpdate() {
-			// if (!this.tickers.length) {
-			// 	return;
-			// }
-
-			// const exchangeData = await loadTickers(this.tickers.map(ticker => ticker.name));
-			// this.tickers.forEach(ticker => ticker.price = exchangeData[ticker.name.toUpperCase()] ?? '-');
+		tickerUpdate(tickerName, price) {
+			this.tickers.filter(ticker => ticker.name === tickerName).forEach(ticker => ticker.price = price);
 		}
 	},
 

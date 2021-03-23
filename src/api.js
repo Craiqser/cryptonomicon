@@ -23,9 +23,6 @@ export const subscribeToTicker = (tickerName, callback) => {
 	tickersHandlers.set(tickerName, [...callbacks, callback]);
 }
 
-export const unsubscribeFromTicker = (tickerName, callback) => {
-	const callbacks = tickersHandlers.get(tickerName) || [];
-	tickersHandlers.set(tickerName, callbacks.filter(cb => cb !== callback));
-}
+export const unsubscribeFromTicker = tickerName => tickersHandlers.delete(tickerName);
 
 setInterval(loadExchangeRates, 5000);
