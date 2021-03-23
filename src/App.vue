@@ -116,7 +116,14 @@ export default {
 		},
 
 		tickerUpdate(tickerName, price) {
-			this.tickers.filter(ticker => ticker.name === tickerName).forEach(ticker => ticker.price = price);
+			this.tickers.filter(ticker => ticker.name === tickerName)
+				.forEach(ticker => {
+					ticker.price = price;
+
+					if (ticker.name === this.tickerCurrent.name) {
+						this.graph.push(price);
+					}
+				});
 		}
 	},
 
@@ -247,9 +254,7 @@ export default {
 				</h3>
 				<div class="flex items-end border-gray-600 border-b border-l h-64">
 					<div v-for='(bar, idx) in graphNormalized' :key='idx'
-						:style='{
-							height: `${bar}%`
-						}'
+						:style='{ height: `${bar}%` }'
 						class="bg-purple-800 border w-10"
 					>
 					</div>
