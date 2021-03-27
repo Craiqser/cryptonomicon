@@ -1,6 +1,9 @@
 <script>
 import { subscribeToTicker, unsubscribeFromTicker } from './api';
 
+const PAGE_ITEMS_COUNT = 6;
+const STORAGE_KEY = 'cryptonomicon-list';
+
 export default {
 	name: "App",
 
@@ -8,6 +11,7 @@ export default {
 		return {
 			filter: '',
 			graph: [],
+			graphBarWidth: 40,
 			graphElementsMax: 1,
 			page: 1,
 
@@ -27,7 +31,7 @@ export default {
 			}
 		});
 
-		const tickersData = localStorage.getItem('cryptonomicon-list');
+		const tickersData = localStorage.getItem(STORAGE_KEY);
 
 		if (tickersData) {
 			this.tickers = JSON.parse(tickersData);
@@ -56,11 +60,11 @@ export default {
 		},
 
 		indexEnd() {
-			return this.page * 6;
+			return this.page * PAGE_ITEMS_COUNT;
 		},
 
 		indexStart() {
-			return (this.page - 1) * 6;
+			return (this.page - 1) * PAGE_ITEMS_COUNT;
 		},
 
 		pageNext() {
@@ -89,7 +93,7 @@ export default {
 				return;
 			}
 
-			this.graphElementsMax = this.$refs.graph.clientWidth / 40;
+			this.graphElementsMax = this.$refs.graph.clientWidth / this.graphBarWidth;
 		},
 
 		graphResize() {
@@ -174,7 +178,7 @@ export default {
 		},
 
 		tickers() {
-			localStorage.setItem('cryptonomicon-list', JSON.stringify(this.tickers));
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(this.tickers));
 		},
 
 		tickersPaginated() {
@@ -189,7 +193,7 @@ export default {
 <template>
 <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
 	<!-- <div class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
-		<svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+		<svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" fill="none" viewBox="0 0 24 24">
 			<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
 			<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 		</svg>
@@ -226,7 +230,7 @@ export default {
 			</div>
 			<button @click='tickerAdd' type="button" class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
 				<!-- Heroicon name: solid/mail -->
-				<svg class="-ml-0.5 mr-2 h-6 w-6" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
+				<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
 					<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
 				</svg>
 				Добавить
@@ -252,10 +256,14 @@ export default {
 
 			<!-- Tickers info -->
 			<dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-				<div v-for='ticker in tickersPaginated' :key='ticker.name'
-					@click='tickerSelect(ticker)'
-					:class='{ "border-4": tickerCurrent === ticker }'
-					class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer">
+				<div v-for="ticker in tickersPaginated" :key="ticker.name"
+					class="bg-white overflow-hidden shadow rounded-lg border-purple-800 border-solid cursor-pointer"
+					@click="tickerSelect(ticker)"
+					:class="{
+						'border-4': ticker === tickerCurrent,
+						'bg-red-100': ticker.price === '-'
+					}"
+				>
 					<div class="px-4 py-5 sm:p-6 text-center">
 						<dt class="text-sm font-medium text-gray-500 truncate">
 							{{ ticker.name }} - USD
@@ -268,7 +276,7 @@ export default {
 					</div>
 					<button @click.stop='tickerDelete(ticker.name)'
 						class="flex items-center justify-center font-medium w-full bg-gray-100 px-4 py-4 sm:px-6 text-md text-gray-500 hover:text-gray-600 hover:bg-gray-200 hover:opacity-20 transition-all focus:outline-none">
-						<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="#718096" aria-hidden="true">
+						<svg class="h-5 w-5" viewBox="0 0 20 20" fill="#718096" aria-hidden="true">
 							<path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
 						</svg>
 						Удалить
@@ -285,8 +293,11 @@ export default {
 				</h3>
 				<div ref="graph" class="flex items-end border-gray-600 border-b border-l h-64">
 					<div v-for='(bar, idx) in graphNormalized' :key='idx'
-						:style='{ height: `${bar}%` }'
-						class="bg-purple-800 border w-10"
+						:style="{
+							height: `${bar}%`,
+							width: `${graphBarWidth}px`
+						}"
+						class="bg-purple-800 border"
 					>
 					</div>
 				</div>
