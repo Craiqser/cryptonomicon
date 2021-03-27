@@ -170,6 +170,7 @@ export default {
 
 		tickerCurrent() {
 			this.graph = [];
+			this.$nextTick().then(this.graphElementsMaxCalculate);
 		},
 
 		tickers() {
