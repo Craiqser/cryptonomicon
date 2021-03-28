@@ -11,7 +11,7 @@ export default {
 		return {
 			filter: '',
 			graph: [],
-			graphBarWidth: 40,
+			graphBarWidth: 20,
 			graphElementsMax: 1,
 			page: 1,
 
@@ -199,10 +199,10 @@ export default {
 		</svg>
 	</div> -->
 	<div class="container">
-		<div class="w-full my-4"></div>
+		<div class="w-full mb-4"></div>
 		<section>
 			<div class="flex">
-				<div class="max-w-xs">
+				<div class="max-w-xs mr-2">
 					<label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
 					<div class="mt-1 relative rounded-md shadow-md">
 						<input v-model.trim='tickerToAddName' @keydown.enter='tickerAdd'
@@ -227,30 +227,30 @@ export default {
 					</div>
 					<div class="text-sm text-red-600">Такой тикер уже добавлен</div> -->
 				</div>
+				<button @click='tickerAdd' type="button" class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+					<!-- Heroicon name: solid/mail -->
+					<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
+						<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
+					</svg>
+					Добавить
+				</button>
 			</div>
-			<button @click='tickerAdd' type="button" class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-				<!-- Heroicon name: solid/mail -->
-				<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
-					<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
-				</svg>
-				Добавить
-			</button>
 		</section>
 
 		<template v-if="tickers.length">
 			<hr class="w-full border-t border-gray-600 my-4" />
 
 			<!-- Filter -->
-			<div>
+			<div class="flex items-center my-2">
+				<div>Фильтр: <input v-model='filter' /></div>
 				<button v-if='page > 1' @click='page--'
-					class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+					class="mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
 					Назад
 				</button>
 				<button v-if='pageNext' @click='page++'
-					class="my-4 mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+					class="mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
 					Вперёд
 				</button>
-				<div>Фильтр: <input v-model='filter' /></div>
 			</div>
 			<hr class="w-full border-t border-gray-600 my-4" />
 
