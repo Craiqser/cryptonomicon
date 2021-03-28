@@ -5,7 +5,7 @@ const INVALID_SUB_MESSAGE = 'INVALID_SUB';
 const TYPE_ERROR = '500';
 const URL_BASE_API = 'https://min-api.cryptocompare.com/data';
 const URL_BASE_WS = 'wss://streamer.cryptocompare.com/v2';
-const URL_COINLIST = '/all/coinlist?summary=true';
+const URL_PARAM_COINLIST = '/all/coinlist?summary=true';
 
 const RATE_FSYM = 'BTC';
 const RATE_TSYM = 'USD';
@@ -13,6 +13,7 @@ const RATE_TSYM = 'USD';
 const soket = new WebSocket(`${URL_BASE_WS}?api_key=${API_KEY}`);
 const tickersHandlers = new Map();
 
+let coins = null;
 let crossRate = 0.0;
 
 soket.addEventListener('message', event => {
@@ -80,6 +81,16 @@ function unsubscribeFromTickerOnWS(fsym, tsym = RATE_TSYM) {
 		"action": "SubRemove",
 		"subs": [`${AGGREGATE_INDEX}~CCCAGG~${fsym}~${tsym}`]
 	});
+}
+
+export const coinsGet = async () => {
+	if (!coins) {
+		coins = await fetch(`${URL_BASE_API}${URL_PARAM_COINLIST}`)
+			.then(res => res.json())
+			.then(rawData => Object.entries(rawData.Data).map(item => [item[0], item[1].FullName]));
+	}
+
+	return coins;
 }
 
 export const subscribeToTicker = (tickerName, callback) => {
