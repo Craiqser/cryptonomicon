@@ -9,6 +9,7 @@ export default {
 
 	data() {
 		return {
+			coins: [],
 			filter: '',
 			graph: [],
 			graphBarWidth: 20,

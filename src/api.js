@@ -1,11 +1,14 @@
-const AGGREGATE_INDEX = '5';
 const API_KEY = '164afab32fd8a2e783c90b333887eaaaea9a8c146437141ead69c62edbf4dd5e';
+
+const AGGREGATE_INDEX = '5';
+const INVALID_SUB_MESSAGE = 'INVALID_SUB';
+const TYPE_ERROR = '500';
+const URL_BASE_API = 'https://min-api.cryptocompare.com/data';
+const URL_BASE_WS = 'wss://streamer.cryptocompare.com/v2';
+const URL_COINLIST = '/all/coinlist?summary=true';
 
 const RATE_FSYM = 'BTC';
 const RATE_TSYM = 'USD';
-
-const URL_BASE_API = 'https://min-api.cryptocompare.com/data';
-const URL_BASE_WS = 'wss://streamer.cryptocompare.com/v2';
 
 const soket = new WebSocket(`${URL_BASE_WS}?api_key=${API_KEY}`);
 const tickersHandlers = new Map();
@@ -13,16 +16,46 @@ const tickersHandlers = new Map();
 let crossRate = 0.0;
 
 soket.addEventListener('message', event => {
-	// console.log(event.data);
-	const { TYPE: type, FROMSYMBOL: fsym, PRICE: price } = JSON.parse(event.data);
+	const {
+		TYPE: type,
+		MESSAGE: message,
+		PARAMETER: parameter,
+		FROMSYMBOL: fsym,
+		TOSYMBOL: tsym,
+		PRICE: price
+	} = JSON.parse(event.data);
 
-	if (type !== AGGREGATE_INDEX || price === undefined) {
-		return;
+	if (type === TYPE_ERROR) {
+		if (message === INVALID_SUB_MESSAGE) {
+			reSubscribe(parameter);
+		}
 	}
 
-	const callbacks = tickersHandlers.get(fsym) || [];
-	callbacks.forEach(callback => callback(price));
+	if ((type === AGGREGATE_INDEX) && (price !== undefined)) {
+		let priceNew = price;
+
+		if (tsym && tsym === RATE_FSYM && crossRate) {
+			priceNew *= crossRate;
+		}
+
+		const callbacks = tickersHandlers.get(fsym) || [];
+		callbacks.forEach(callback => callback(priceNew));
+	}
 });
+
+function reSubscribe(parameter) {
+	const parms = parameter.split('~');
+
+	if (parms.length > 2) {
+		const fsym = parms[2];
+		const tsym = parms[3];
+		unsubscribeFromTickerOnWS(fsym, tsym);
+
+		if ((tsym === RATE_TSYM) && (fsym !== RATE_FSYM)) {
+			subscribeToTickerOnWS(fsym, RATE_FSYM);
+		}
+	}
+}
 
 function sendToWebSocket(message) {
 	const messageStringified = JSON.stringify(message);
@@ -59,7 +92,6 @@ export const subscribeToTicker = (tickerName, callback) => {
 }
 
 export const unsubscribeFromTicker = tickerName => {
-
 	if (tickerName === RATE_FSYM) {
 		const callbacks = tickersHandlers.get(tickerName) || [];
 
