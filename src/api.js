@@ -85,9 +85,11 @@ function unsubscribeFromTickerOnWS(fsym, tsym = RATE_TSYM) {
 
 export const coinsGet = async () => {
 	if (!coins) {
-		coins = await fetch(`${URL_BASE_API}${URL_PARAM_COINLIST}`)
+		const coinsArray = await fetch(`${URL_BASE_API}${URL_PARAM_COINLIST}`)
 			.then(res => res.json())
-			.then(rawData => Object.entries(rawData.Data).map(item => [item[0], item[1].FullName]));
+			.then(data => Object.entries(data.Data).map(item => [item[0], item[1].FullName]));
+
+		coins = new Map(coinsArray);
 	}
 
 	return coins;

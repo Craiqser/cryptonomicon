@@ -9,7 +9,7 @@ export default {
 
 	data() {
 		return {
-			coinList: [],
+			coinList: null,
 			filter: '',
 			loading: false,
 			graph: [],
@@ -25,6 +25,8 @@ export default {
 
 	created() {
 		this.loading = true;
+		this.coinListFetch();
+
 		const VALID_KEYS = ['filter', 'page'];
 		const windowData = Object.fromEntries(new URL(window.location).searchParams.entries());
 
@@ -40,14 +42,11 @@ export default {
 			this.tickers = JSON.parse(tickersData);
 			this.tickers.forEach(ticker => subscribeToTicker(ticker.name, price => this.tickerUpdate(ticker.name, price)));
 		}
-
-		this.coinList = coinsGet();
-		console.dir(this.coinList);
-		this.loading = false;
 	},
 
 	mounted() {
 		window.addEventListener('resize', this.graphElementsMaxCalculate);
+		this.loading = false;
 	},
 
 	beforeUnmount() {
@@ -97,6 +96,11 @@ export default {
 	},
 
 	methods: {
+		coinListFetch() {
+			this.coinList = coinsGet(); // ...
+			console.dir(this.coinList);
+		},
+
 		graphElementsMaxCalculate() {
 			if (!this.$refs.graph) {
 				return;
