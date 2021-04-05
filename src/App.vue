@@ -3,13 +3,14 @@ import { coinsGet, subscribeToTicker, unsubscribeFromTicker } from './api';
 
 const PAGE_ITEMS_COUNT = 6;
 const STORAGE_KEY = 'cryptonomicon-list';
+const SUGGESTIONS = 4;
 
 export default {
 	name: "App",
 
 	data() {
 		return {
-			coinList: null,
+			coinList: [],
 			filter: '',
 			loading: false,
 			graph: [],
@@ -54,8 +55,6 @@ export default {
 	},
 
 	computed: {
-		coinListFiltered() {},
-
 		graphNormalized() {
 			const maxValue = Math.max(...this.graph);
 			const minValue = Math.min(...this.graph);
@@ -86,19 +85,37 @@ export default {
 			};
 		},
 
+		tickerExists() {
+			return (this.tickerToAddName.length > 0)
+				&& (this.tickers.some(ticker => ticker.name === this.tickerToAddName.toUpperCase()));
+		},
+
 		tickersFiltered() {
 			return this.tickers.filter(ticker => ticker.name.includes(this.filter));
 		},
 
 		tickersPaginated() {
 			return this.tickersFiltered.slice(this.indexStart, this.indexEnd);
+		},
+
+		tickersSuggestion() {
+			let ret = [];
+
+			if (this.tickerToAddName.length > 0) {
+				ret = this.coinList
+					.filter(([_, v]) => v.includes(this.tickerToAddName.toUpperCase()))
+					.map(([k, _]) => k)
+					.slice(0, SUGGESTIONS);
+				console.dir(ret);
+			}
+
+			return ret;
 		}
 	},
 
 	methods: {
-		coinListFetch() {
-			this.coinList = coinsGet(); // ...
-			console.dir(this.coinList);
+		async coinListFetch() {
+			this.coinList = await coinsGet();
 		},
 
 		graphElementsMaxCalculate() {
@@ -124,8 +141,13 @@ export default {
 			return price > 1 ? price.toFixed(2) : price.toPrecision(2);
 		},
 
+		suggestionHandler(tickerName) {
+			this.tickerToAddName = tickerName;
+			this.tickerAdd();
+		},
+
 		tickerAdd() {
-			if (this.tickers.find(ticker => ticker.name === this.tickerToAddName)) {
+			if (this.tickerExists) {
 				return;
 			}
 
@@ -218,38 +240,27 @@ export default {
 			<div class="flex">
 				<div class="max-w-xs mr-2">
 					<label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
-					<div class="mt-1 relative rounded-md shadow-md">
-						<input v-model.trim='tickerToAddName' @keydown.enter='tickerAdd'
-							type="text" name="wallet" id="wallet"
-							placeholder="Например, DOGE"
+					<div class="flex mt-1 relative rounded-md shadow-md">
+						<input v-model.trim="tickerToAddName" @keydown.enter="tickerAdd"
+							type="text" name="wallet" id="wallet" placeholder="Например, DOGE"
 							class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
 						/>
+						<button @click="tickerAdd" type="button" class="m-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+							<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
+								<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
+							</svg>
+							Добавить
+						</button>
 					</div>
-					<!--
-					<div class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-					<span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-						BTC
-					</span>
-					<span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-						DOGE
-					</span>
-					<span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-						BCH
-					</span>
-					<span class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-						CHD
-					</span>
+					<div v-if="tickersSuggestion.length > 0" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+						<template v-for="item in tickersSuggestion" :key="item">
+							<span @click="suggestionHandler(item)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+								{{ item }}
+							</span>
+						</template>
 					</div>
-					<div class="text-sm text-red-600">Такой тикер уже добавлен</div>
-					-->
+					<div v-if="tickerExists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
 				</div>
-				<button @click='tickerAdd' type="button" class="my-4 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-					<!-- Heroicon name: solid/mail -->
-					<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
-						<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
-					</svg>
-					Добавить
-				</button>
 			</div>
 		</section>
 
@@ -258,12 +269,12 @@ export default {
 
 			<!-- Filter -->
 			<div class="flex items-center my-2">
-				<div>Фильтр: <input v-model='filter' /></div>
-				<button v-if='page > 1' @click='page--'
+				<div>Фильтр: <input v-model="filter" /></div>
+				<button v-if="page > 1" @click="page--"
 					class="mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
 					Назад
 				</button>
-				<button v-if='pageNext' @click='page++'
+				<button v-if="pageNext" @click="page++"
 					class="mx-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
 					Вперёд
 				</button>
