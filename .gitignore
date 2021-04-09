@@ -3,4 +3,4 @@ dist-ssr/
 node_modules/
 
 *.local
-yarn.lock
+package-lock.json
