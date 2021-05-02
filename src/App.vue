@@ -1,5 +1,6 @@
 <script>
 import { coinsGet, subscribeToTicker, unsubscribeFromTicker } from './api';
+import TickerAdd from './components/TickerAdd.vue';
 
 const PAGE_ITEMS_COUNT = 6;
 const STORAGE_KEY = 'cryptonomicon-list';
@@ -19,9 +20,12 @@ export default {
 			page: 1,
 
 			tickerCurrent: null,
-			tickers: [],
-			tickerToAddName: ''
+			tickers: []
 		}
+	},
+
+	components: {
+		TickerAdd
 	},
 
 	created() {
@@ -85,9 +89,9 @@ export default {
 			};
 		},
 
-		tickerExists() {
-			return (this.tickerToAddName.length > 0)
-				&& (this.tickers.some(ticker => ticker.name === this.tickerToAddName.toUpperCase()));
+		tickerExists(tickerName) {
+			return (tickerName.length > 0)
+				&& (this.tickers.some(ticker => ticker.name === tickerName.toUpperCase()));
 		},
 
 		tickersFiltered() {
@@ -109,6 +113,10 @@ export default {
 			}
 
 			return ret;
+		},
+
+		tooManyTickersAdded() {
+			return this.tickers.length > 30;
 		}
 	},
 
@@ -141,22 +149,20 @@ export default {
 		},
 
 		suggestionHandler(tickerName) {
-			this.tickerToAddName = tickerName;
-			this.tickerAdd();
+			this.tickerAdd(tickerName);
 		},
 
-		tickerAdd() {
-			if (this.tickerExists) {
+		tickerAdd(tickerName) {
+			if (this.tickerExists(tickerName)) {
 				return;
 			}
 
 			const tickerToAdd = {
-				name: this.tickerToAddName,
+				name: tickerName,
 				price: '-'
 			};
 
 			this.tickers = [...this.tickers, tickerToAdd];
-			this.tickerToAddName = '';
 			this.filter = '';
 
 			subscribeToTicker(tickerToAdd.name, price => this.tickerUpdate(tickerToAdd.name, price));
@@ -234,33 +240,19 @@ export default {
 	</div>
 	<div class="container">
 		<div class="w-full mb-4"></div>
-		<section>
-			<div class="flex">
-				<div class="max-w-xs mr-2">
-					<label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
-					<div class="flex mt-1 relative rounded-md shadow-md">
-						<input v-model.trim="tickerToAddName" @keydown.enter="tickerAdd"
-							type="text" name="wallet" id="wallet" placeholder="Например, DOGE"
-							class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-						/>
-					</div>
-					<div v-if="tickersSuggestion.length > 0" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-						<template v-for="item in tickersSuggestion" :key="item">
-							<span @click="suggestionHandler(item)" class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
-								{{ item }}
-							</span>
-						</template>
-					</div>
-					<div v-if="tickerExists" class="text-sm text-red-600">Такой тикер уже добавлен</div>
-				</div>
-			</div>
-			<button @click="tickerAdd" type="button" class="m-2 inline-flex items-center py-2 px-4 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-full text-white bg-gray-600 hover:bg-gray-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-				<svg class="-ml-0.5 mr-2 h-6 w-6" width="30" height="30" viewBox="0 0 24 24" fill="#ffffff">
-					<path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path>
-				</svg>
-				Добавить
-			</button>
-		</section>
+		<ticker-add @ticker-add="tickerAdd" :disabled="tooManyTickersAdded" />
+
+		<!-- <div v-if="tickersSuggestion.length > 0" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+			<template v-for="item in tickersSuggestion" :key="item">
+				<span
+					class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+					@click="suggestionHandler(item)"
+				>
+					{{ item }}
+				</span>
+			</template>
+		</div>
+		<div v-if="tickerExists" class="text-sm text-red-600">Такой тикер уже добавлен</div> -->
 
 		<template v-if="tickers.length">
 			<hr class="w-full border-t border-gray-600 my-4" />
