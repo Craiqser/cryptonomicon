@@ -6,18 +6,21 @@ export default {
 			type: Array
 		},
 
-		tickerName: {
+		tickerCurrent: {
 			default: null,
 			required: false,
-			type: String
+			type: Object
 		}
+	},
+
+	emits: {
+		'graph-close': null
 	},
 
 	data() {
 		return {
 			graphBarWidth: 20,
-			graphElementsMax: 1,
-			tickerCurrent: null
+			graphElementsMax: 1
 		};
 	},
 
@@ -29,14 +32,7 @@ export default {
 			if (minValue === maxValue) {
 				return this.graph.map(() => 50);
 			}
-
 			return this.graph.map((price) => 5 + (price - minValue) * 95 / (maxValue - minValue));
-		}
-	},
-
-	watch: {
-		graphElementsMax() {
-			this.graphResize();
 		}
 	},
 
@@ -49,11 +45,14 @@ export default {
 	},
 
 	methods: {
+		graphClose() {
+			this.$emit('graph-close');
+		},
+
 		graphElementsMaxCalculate() {
 			if (!this.$refs.graph) {
 				return;
 			}
-
 			this.graphElementsMax = this.$refs.graph.clientWidth / this.graphBarWidth;
 		}
 	}
@@ -76,7 +75,7 @@ export default {
 			class="bg-purple-800 border"
 		/>
 	</div>
-	<button type="button" class="absolute top-0 right-0" @click="tickerCurrent = null">
+	<button type="button" class="absolute top-0 right-0" @click="graphClose">
 		<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs"
 			version="1.1" width="30" height="30" x="0" y="0"
 			viewBox="0 0 511.76 511.76" style="enable-background:new 0 0 512 512" xml:space="preserve"

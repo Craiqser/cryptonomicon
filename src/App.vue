@@ -66,6 +66,10 @@ export default {
 			this.page = 1;
 		},
 
+		graphElementsMax() {
+			this.graphResize();
+		},
+
 		pageState(value) {
 			window.history.pushState(null, document.title, `${window.location.pathname}?filter=${value.filter}&page=${value.page}`);
 		},
@@ -235,7 +239,7 @@ export default {
 				</div>
 			</dl>
 
-			<ticker-graph :graph="graph" :ticker-name="tickerCurrent" />
+			<ticker-graph :graph="graph" :ticker-current="tickerCurrent" @graph-close="tickerCurrent = null" />
 
 			<hr class="w-full border-t border-gray-600 my-4">
 		</template>
