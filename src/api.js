@@ -16,7 +16,7 @@ const tickersHandlers = new Map();
 let coins = null;
 let crossRate = 0.0;
 
-soket.addEventListener('message', event => {
+soket.addEventListener('message', (event) => {
 	const {
 		TYPE: type,
 		MESSAGE: message,
@@ -40,7 +40,7 @@ soket.addEventListener('message', event => {
 		}
 
 		const callbacks = tickersHandlers.get(fsym) || [];
-		callbacks.forEach(callback => callback(priceNew));
+		callbacks.forEach((callback) => callback(priceNew));
 	}
 });
 
@@ -61,7 +61,7 @@ function reSubscribe(parameter) {
 function sendToWebSocket(message) {
 	const messageStringified = JSON.stringify(message);
 
-	if (soket.readyState == WebSocket.OPEN) {
+	if (soket.readyState === WebSocket.OPEN) {
 		soket.send(messageStringified);
 		return;
 	}
@@ -71,27 +71,27 @@ function sendToWebSocket(message) {
 
 function subscribeToTickerOnWS(fsym, tsym = RATE_TSYM) {
 	sendToWebSocket({
-		"action": "SubAdd",
-		"subs": [`${AGGREGATE_INDEX}~CCCAGG~${fsym}~${tsym}`]
+		'action': 'SubAdd',
+		'subs': [`${AGGREGATE_INDEX}~CCCAGG~${fsym}~${tsym}`]
 	});
 }
 
 function unsubscribeFromTickerOnWS(fsym, tsym = RATE_TSYM) {
 	sendToWebSocket({
-		"action": "SubRemove",
-		"subs": [`${AGGREGATE_INDEX}~CCCAGG~${fsym}~${tsym}`]
+		'action': 'SubRemove',
+		'subs': [`${AGGREGATE_INDEX}~CCCAGG~${fsym}~${tsym}`]
 	});
 }
 
 export const coinsGet = async () => {
 	if (!coins) {
 		coins = await fetch(`${URL_BASE_API}${URL_PARAM_COINLIST}`)
-			.then(res => res.json())
-			.then(data => Object.entries(data.Data).map(item => [item[0], item[1].FullName]));
+			.then((res) => res.json())
+			.then((data) => Object.entries(data.Data).map((item) => [item[0], item[1].FullName]));
 	}
 
 	return coins;
-}
+};
 
 export const subscribeToTicker = (tickerName, callback) => {
 	const callbacks = tickersHandlers.get(tickerName) || [];
@@ -100,20 +100,21 @@ export const subscribeToTicker = (tickerName, callback) => {
 	if (!callbacks.length) {
 		subscribeToTickerOnWS(tickerName);
 	}
-}
+};
 
-export const unsubscribeFromTicker = tickerName => {
+export const unsubscribeFromTicker = (tickerName) => {
 	if (tickerName === RATE_FSYM) {
 		const callbacks = tickersHandlers.get(tickerName) || [];
 
 		if (callbacks.length > 1) {
 			tickersHandlers.set(tickerName, [callbacks[0]]);
 		}
-	}
-	else {
+	} else {
 		tickersHandlers.delete(tickerName);
 		unsubscribeFromTickerOnWS(tickerName);
 	}
-}
+};
 
-subscribeToTicker(RATE_FSYM, price => crossRate = price);
+subscribeToTicker(RATE_FSYM, (price) => {
+	crossRate = price;
+});
