@@ -71,24 +71,26 @@ export default {
 <template>
 <section>
 	<div class="flex">
-		<label for="wallet" class="block mr-2 text-sm font-medium text-gray-700">Тикер</label>
-		<div class="flex rounded-md shadow-md">
-			<input id="wallet" v-model.trim="tickerName" type="text" name="wallet"
-				placeholder="Например, DOGE"
-				class="block w-full pr-2 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
-				@keydown.enter="tickerAdd"
-			>
+		<div class="max-ws-xs">
+			<label for="wallet" class="block text-sm font-medium text-gray-700">Тикер</label>
+			<div class="mt-1 relative rounded-md shadow-md">
+				<input id="wallet" v-model.trim="tickerName" type="text" name="wallet"
+					placeholder="Например, DOGE"
+					class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
+					@keydown.enter="tickerAdd"
+				>
+			</div>
+			<div v-if="tickersSuggestion.length > 0" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+				<template v-for="item in tickersSuggestion" :key="item">
+					<span
+						class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
+						@click="suggestionHandler(item)"
+					>
+						{{ item }}
+					</span>
+				</template>
+			</div>
 		</div>
-	</div>
-	<div v-if="tickersSuggestion.length > 0" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
-		<template v-for="item in tickersSuggestion" :key="item">
-			<span
-				class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-				@click="suggestionHandler(item)"
-			>
-				{{ item }}
-			</span>
-		</template>
 	</div>
 	<button-add class="m-2" type="button" :disabled="disabled" @click="tickerAdd" />
 </section>
