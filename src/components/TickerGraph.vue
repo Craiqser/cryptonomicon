@@ -1,29 +1,13 @@
 <script>
 export default {
 	props: {
-		graph: {
-			required: true,
-			type: Array
-		},
-
-		tickerCurrent: {
-			default: null,
-			required: false,
-			type: Object
-		}
+		graph: { required: true, type: Array },
+		tickerCurrent: { default: null, required: false, type: Object }
 	},
-
-	emits: {
-		'graph-close': null
-	},
-
+	emits: { 'graph-close': null },
 	data() {
-		return {
-			graphBarWidth: 20,
-			graphElementsMax: 1
-		};
+		return { graphBarWidth: 20, graphElementsMax: 1 };
 	},
-
 	computed: {
 		graphNormalized() {
 			const maxValue = Math.max(...this.graph);
@@ -35,25 +19,16 @@ export default {
 			return this.graph.map((price) => 5 + (price - minValue) * 95 / (maxValue - minValue));
 		}
 	},
-
-	mounted() {
-		window.addEventListener('resize', this.graphElementsMaxCalculate);
-	},
-
-	beforeUnmount() {
-		window.removeEventListener('resize', this.graphElementsMaxCalculate);
-	},
-
+	mounted() { window.addEventListener('resize', this.graphElementsMaxCalculate); },
+	beforeUnmount() { window.removeEventListener('resize', this.graphElementsMaxCalculate); },
 	methods: {
 		graphClose() {
 			this.$emit('graph-close');
 		},
-
 		graphElementsMaxCalculate() {
-			if (!this.$refs.graph) {
-				return;
+			if (this.$refs.graph) {
+				this.graphElementsMax = this.$refs.graph.clientWidth / this.graphBarWidth;
 			}
-			this.graphElementsMax = this.$refs.graph.clientWidth / this.graphBarWidth;
 		}
 	}
 };
@@ -65,13 +40,8 @@ export default {
 		{{ tickerCurrent.name }} - USD
 	</h3>
 	<div ref="graph" class="flex items-end border-gray-600 border-b border-l h-64">
-		<div
-			v-for="(bar, idx) in graphNormalized"
-			:key="idx"
-			:style="{
-				height: `${bar}%`,
-				width: `${graphBarWidth}px`
-			}"
+		<div v-for="(bar, idx) in graphNormalized" :key="idx"
+			:style="{ height: `${bar}%`, width: `${graphBarWidth}px` }"
 			class="bg-purple-800 border"
 		/>
 	</div>

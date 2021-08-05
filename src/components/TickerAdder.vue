@@ -5,58 +5,42 @@ import { coinsGet } from '../api.js';
 const SUGGESTIONS = 4;
 
 export default {
-	components: {
-		ButtonAdd
-	},
-
+	components: { ButtonAdd },
 	props: {
-		disabled: {
-			default: false,
-			required: false,
-			type: Boolean
-		}
+		disabled: { default: false, required: false, type: Boolean }
 	},
-
 	emits: {
 		'ticker-add': (value) => typeof value === 'string' && value.length > 0
 	},
-
 	data() {
 		return {
 			coinList: [],
 			tickerName: ''
 		};
 	},
-
 	computed: {
 		tickersSuggestion() {
 			let ret = [];
-
 			if (this.tickerName.length > 0) {
 				ret = this.coinList
 					.filter(([_, v]) => v.includes(this.tickerName.toUpperCase()))
 					.map(([k, _]) => k)
 					.slice(0, SUGGESTIONS);
 			}
-
 			return ret;
 		}
 	},
-
 	created() {
 		this.coinListFetch();
 	},
-
 	methods: {
 		async coinListFetch() {
 			this.coinList = await coinsGet();
 		},
-
 		suggestionHandler(tickerName) {
 			this.tickerName = tickerName;
 			this.tickerAdd();
 		},
-
 		tickerAdd() {
 			if (this.tickerName.length === 0) {
 				return;

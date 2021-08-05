@@ -1,16 +1,9 @@
 <script>
 export default {
 	props: {
-		disabled: {
-			default: false,
-			required: false,
-			type: Boolean
-		}
+		disabled: { default: false, required: false, type: Boolean }
 	},
-
-	emits: {
-		click: null
-	}
+	emits: { click: null }
 };
 </script>
 
